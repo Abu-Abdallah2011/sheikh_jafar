@@ -10,7 +10,7 @@
     <div class="flex justify-center items-center min-h-screen bg-gray-100 dark:bg-gray-900">
         <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg w-full sm:w-1/2 p-6">
             <div class="text-center mb-6 dark:bg-gray-800">
-                <h2 class="text-3xl font-bold text-gray-900 dark:text-white">KULLIYYATU MASJIDIL QUR'AN</h2>
+                <x-letterhead />
             </div>
             
             <table class="border-collapse w-full table-auto dark:bg-gray-800">

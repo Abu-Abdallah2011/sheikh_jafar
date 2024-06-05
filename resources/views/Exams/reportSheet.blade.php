@@ -12,11 +12,9 @@
 
 
     <div class="text-center">
-        <h1 class="text-3xl font-bold mt-8 mb-4">KULLIYYATU MASJIDIL QUR'AN</h1>
-
-        Makama New Extension, Federal Low-Cost, Bauchi.<br/>
+                <x-letterhead />
         
-        <h2 class="text-3xl font-bold mt-8 mb-4"><u>Student Report Sheet</u></h2>
+        <h2 class="text-2xl font-bold mt-8 mb-4"><u>Student Report Sheet</u></h2>
         </div>
 
     <div>
