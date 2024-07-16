@@ -207,7 +207,7 @@
                             <!-- Session Status -->
                         <x-success-status class="mb-4" :status="session('message')" />
 
-                        <h1 class="font-bold text-center text-white">{{$class}}</h1>
+                        {{-- <h1 class="font-bold text-center text-white">{{$class}}</h1> --}}
                     
                             <!-- Main Content -->
                             <main class="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -221,7 +221,7 @@
                                             </div>
                                             <div class="ml-4">
                                                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-900">Teachers</h3>
-                                                <p class="text-2xl font-bold text-gray-900 dark:text-gray-900">{{$teachers->count()}}</p>
+                                                {{-- <p class="text-2xl font-bold text-gray-900 dark:text-gray-900">{{$teachers->count()}}</p> --}}
                                             </div>
                                         </div>
                                     </div>
@@ -236,14 +236,14 @@
                                             </div>
                                             <div class="ml-4">
                                                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-900">Students</h3>
-                                                <p class="text-2xl font-bold text-gray-900 dark:text-gray-900">{{$teacher->students->count()}}</p>
+                                                {{-- <p class="text-2xl font-bold text-gray-900 dark:text-gray-900">{{$teacher->students->count()}}</p> --}}
                                             </div>
                                         </div>
                                     </div>
                                 </a>
                     
                                     <!-- Card Template for PROFILE -->
-                                    <a href="{{ url('/teachers_database/' . $teacher->id) }}">
+                                    {{-- <a href="{{ url('/teachers_database/' . $teacher->id) }}"> --}}
                                     <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
                                         <div class="flex items-center">
                                             <div class="flex-shrink-0">
@@ -258,7 +258,7 @@
                                     </a>
 
                                 <!-- Card: Hadda -->
-                                <a href="{{ url('/studentsHadda/' . $teacher->id) }}">
+                                {{-- <a href="{{ url('/studentsHadda/' . $teacher->id) }}"> --}}
                                     <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
                                         <div class="flex items-center">
                                             <div class="flex-shrink-0">
