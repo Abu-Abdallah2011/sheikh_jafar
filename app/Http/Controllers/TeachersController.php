@@ -51,7 +51,7 @@ class TeachersController extends Controller
     
             }
 
-            // $data['created_by'] = $adder->fullname;
+            $data['created_by'] = $adder->fullname;
 
         $teacher = register_teacher::create($data);
         return redirect('/teachers_database')->with('message', 'Maa Shaa Allaah! Teacher Added Successfully! Jazaakumul Laahu Khaira!');
