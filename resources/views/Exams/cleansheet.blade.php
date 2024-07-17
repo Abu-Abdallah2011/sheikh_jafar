@@ -16,6 +16,21 @@
                 </x-primary-button>
             </a> 
                 @endcan
+                @can('isExam')
+                <a href="{{ route('download.all.reportsheets') }}">
+                    <x-primary-button class="absolute top-15 right-40 bg-purple-500">
+                    <i class="fa fa-download"></i>
+                </x-primary-button>
+                </a>
+                @endcan
+                @can('isExam')
+                <a href="{{ route('download.all.cleansheets') }}">
+                    <x-primary-button class="absolute top-15 right-50 bg-pink-500">
+                    <i class="fa fa-download"></i>
+                </x-primary-button>
+                </a>
+                @endcan
+
         </h2>
     </x-slot>
 
@@ -26,7 +41,9 @@
                 <div class="p-6 text-gray-900 dark:text-gray-100">
 
                     <div class="text-center">
+                        <a href="{{ route('downloadCleanSheets') }}">
                         <h1 class="text-3xl font-bold mt-8 mb-4">STUDENTS RESULTS</h1>
+                        </a>
                     </div>
                     
                     <table class="table table-responsive">
@@ -34,8 +51,8 @@
                       <tr>
                           <td>Session: {{ $sessions->session }}</td>
                   
-                          <td>Term: {{ $sessions->term }}</td>
-                  
+                          <td><a href="{{ route('downloadReportSheets') }}">Term: {{ $sessions->term }}</a></td>
+                        
                           <td>Class: {{ $class }}</td>
                             
                       </tr>
@@ -49,7 +66,7 @@
                         <thead>
                   
                             <tr>
-                                <th class="text-center font-bold uppercase bg-gray-200  p-2 md:p-3 lg:p-4 text-gray-600 border border-gray-300 lg:table-cell">ID</th>
+                                <th class="text-center font-bold uppercase bg-gray-200  p-2 md:p-3 lg:p-4 text-gray-600 border border-gray-300 lg:table-cell">POS</th>
                                 <th class="text-center font-bold uppercase bg-gray-200  p-2 md:p-3 lg:p-4 text-gray-600 border border-gray-300 lg:table-cell">NAME</th>
                                
                                 @php
@@ -73,8 +90,9 @@
                                 @endforeach
                                 <th class="text-center font-bold uppercase bg-gray-200  p-2 md:p-3 lg:p-4 text-gray-600 border border-gray-300 lg:table-cell">TOTAL</th>
                                 <th class="text-center font-bold uppercase bg-gray-200  p-2 md:p-3 lg:p-4 text-gray-600 border border-gray-300 lg:table-cell">AVR.</i></th>
+                                <th class="text-center font-bold uppercase bg-gray-200  p-2 md:p-3 lg:p-4 text-gray-600 border border-gray-300 lg:table-cell">CUM</i></th>
                                 <th class="text-center font-bold uppercase bg-gray-200  p-2 md:p-3 lg:p-4 text-gray-600 border border-gray-300 lg:table-cell">ATT.</i></th>
-                                <th class="text-center font-bold uppercase bg-gray-200  p-2 md:p-3 lg:p-4 text-gray-600 border border-gray-300 lg:table-cell">POS.</th>
+                                {{-- <th class="text-center font-bold uppercase bg-gray-200  p-2 md:p-3 lg:p-4 text-gray-600 border border-gray-300 lg:table-cell">POS.</th> --}}
                                 <th class="text-center font-bold uppercase bg-gray-200  p-2 md:p-3 lg:p-4 text-gray-600 border border-gray-300 lg:table-cell"><a href="/exams/commentEditView">COMMENT</a></th>
                             </tr>
                         
@@ -84,7 +102,7 @@
                             @foreach($orderedStudents as $student)
                       
                                 <tr class="bg-white lg:hover:bg-gray-100 lg:table-row mb-10 lg:mb-0">
-                                <td class="w-full lg:w-auto p-3 text-gray-800 border border-b lg:table-cell relative lg:static">{{ $student->id }}</td>
+                                <td class="w-full lg:w-auto p-3 text-gray-800 border border-b lg:table-cell relative lg:static">{{ $student->position }}</td>
                                     <td class="w-full lg:w-auto p-3 text-gray-800 border border-b lg:table-cell relative lg:static"><a href="{{ url ('/reportSheet/' . $student->id)}}">{{ $student->fullname }}</a></td>
 
                                     @php
@@ -94,22 +112,21 @@
                                     @foreach($matchingSubjects as $subjects)
 
                                     @php
-                                    $subjective = $subjects
-                                                        ->where('session', $sessions->session)
-                                                        ->where('term', $sessions->term)
-                                                        ->where('student_id', $student->id)
-                                                        ->where('subject_id', $subjects->subject_id)
-                                                        ->get();
-                                    @endphp
+                                        $subjective = $subjects
+                                                            ->where('session', $sessions->session)
+                                                            ->where('term', $sessions->term)
+                                                            ->where('student_id', $student->id)
+                                                            ->where('subject_id', $subjects->subject_id)
+                                                            ->get();
+                                        @endphp
 
                                     @if (!in_array($subjects->subject_id, $columnsDisplayed))
-                                    {{-- @if ($matchingSubjects) --}}
-                                    <td class="w-full lg:w-auto p-3 text-gray-800 border border-b lg:table-cell relative lg:static">{{ $totalCa[$student->id][$subjects->subject_id] }}</td>
+                                    {{-- <td class="w-full lg:w-auto p-3 text-gray-800 border border-b lg:table-cell relative lg:static">{{ $totalCa[$student->id][$subjects->subject_id] }}</td> --}}
+                                    <td class="w-full lg:w-auto p-3 text-gray-800 border border-b lg:table-cell relative lg:static">{{ isset($totalCa[$student->id][$subjects->subject_id]) ? $totalCa[$student->id][$subjects->subject_id] : 0 }}</td>
                                     <td class="w-full lg:w-auto p-3 text-gray-800 border border-b lg:table-cell relative lg:static">
                                         @foreach($subjective as $exam)
                                         {{ $exam->exams }}</td>
                                         @endforeach
-                                    {{-- @endif --}}
                                     @php
                              $columnsDisplayed[] = $subjects->subject_id;
                          @endphp
@@ -127,51 +144,15 @@
                                         @endif
                                     </td>
                                     <td class="w-full lg:w-auto p-3 text-gray-800 border border-b lg:table-cell relative lg:static">
-                                        {{-- <canvas id="myChart" width="400" height="400"></canvas> --}}
-{{-- <script>
-    var ctx = document.getElementById('myChart').getContext('2d');
-    var myChart = new Chart(ctx, {
-        type: 'pie',
-        data: {
-            labels: ['absent', 'late', 'present', 'excused'],
-            datasets: [{
-                label: '# of Votes',
-                data: [12, 19, 3, 5],
-                backgroundColor: [
-                    'rgba(255, 0, 0, 0.5)',
-                    'rgba(255, 255, 0, 0.5)',
-                    'rgba(0, 255, 0, 0.5)',
-                    'rgba(255, 0, 255, 0.5)'
-                ],
-                borderColor: [
-                    'rgba(255, 0, 0, 0.5)',
-                    'rgba(255, 255, 0, 0.5)',
-                    'rgba(0, 255, 0, 0.5)',
-                    'rgba(255, 0, 255, 0.5)'
-                ],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            plugins: {
-                datalabels: {
-                    color: '#000', // Color of the data labels
-                    anchor: 'end',
-                    align: 'top',
-                    formatter: function(value, context) {
-                        return value;
-                    }
-                }
-            }
-        }
-    });
-</script> --}}
-
+                                        @if ($cummulativematchingSubjects !== null)
+                                        {{ number_format($cummulativeaverageTotal[$student->id], 2) }}
+                                        @endif
+                                    </td>
+                                    <td class="w-full lg:w-auto p-3 text-gray-800 border border-b lg:table-cell relative lg:static">
                                         {{ number_format($student->attendancePercentage) }}%
                                 </td>
-                                    <td class="w-full lg:w-auto p-3 text-gray-800 border border-b lg:table-cell relative lg:static">{{ $student->position}}</td>
+                                    {{-- <td class="w-full lg:w-auto p-3 text-gray-800 border border-b lg:table-cell relative lg:static">{{ $student->position}}</td> --}}
                                     <td class="w-full lg:w-auto p-3 text-gray-800 border border-b lg:table-cell relative lg:static">
-                                        {{-- @if ($matchingSubjects) --}}
                                         @foreach($matchingSubjects as $subjects)
                                         @php
                                         $subjective = $subjects
@@ -185,7 +166,6 @@
                                         {{ $subject->comment }}
                                         @endforeach
                                         @endforeach
-                                        {{-- @endif --}}
                                 </td>
                                     
                                   </tr>

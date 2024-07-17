@@ -6,7 +6,7 @@
 
         </h2>
     </x-slot>
-    <x-search />
+    <x-schoolFeesSearch />
     <x-success-status class="mb-4" :status="session('message')" />
 
     <div class="py-6">
@@ -19,6 +19,29 @@
                    @php
                     $termsToCheck = ['1st Term', '2nd Term', '3rd Term'];
                    @endphp
+
+                   {{-- TRYING TO RECTIFY THE FOREACH LOOP --}}
+        @php
+        // Preparing the data
+        $studentTermStatus = [];
+    
+        foreach ($students as $student) {
+            $studentTermStatus[$student->id] = [
+                '1st Term' => null,
+                '2nd Term' => null,
+                '3rd Term' => null,
+            ];
+
+            $studentFees = $student->fees->where('session', $session);
+    
+            foreach ($studentFees as $record) {
+                // if ($record->student_id === $student->id) {
+                    $studentTermStatus[$student->id][$record->term] = $record;
+                }
+            }
+        // }
+    @endphp
+{{-- END OF THIS RECTIFICATION PART --}}
                     
                     <table class="border-collapse w-full table-responsive">
                         <thead>
@@ -71,72 +94,38 @@
                                         <td class="w-full bg-red-500 lg:w-auto p-3 text-white border border-b lg:table-cell relative lg:static"><a href="{{ $PreviousSessionUrl }}">NOT CLEARED</a></td>
                                     @endif
 
-                                    @php
-                                        $studentFees = $student->fees->where('session', $session);
-                                    @endphp
+                                    @foreach ($termsToCheck as $termToCheck)
+                    @php
+                        $record = $studentTermStatus[$student->id][$termToCheck];
+                        $status = $record ? $record->status : 'NO REC.';
+                        $url = $record ? url("/fees_record/{$student->id}/{$record->term}/" . str_replace('/', '_', $record->session) . '/edit_fees') : '#';
 
-                                    @foreach ($studentFees->unique('session') as $record)
-
-                                    @php
-                                    $status = $record->status; 
-                                    $url = url("/fees_record/{$student->id}/{$record->term}/" . str_replace('/', '_', $record->session) . '/edit_fees');
-                                    @endphp
-
-                                        @if($record->term === '1st Term')
-                                    @if ($status === 'PAID')
-                                    <td class="w-full bg-green-500 lg:w-auto p-3 text-white border border-b lg:table-cell relative lg:static">
-                                    @elseif ($status === 'PART')
-                                    <td class="w-full bg-yellow-500 lg:w-auto p-3 text-white border border-b lg:table-cell relative lg:static">
-                                    @elseif ($status === 'FREE')
-                                    <td class="w-full bg-purple-500 lg:w-auto p-3 text-white border border-b lg:table-cell relative lg:static">
-                                    @elseif ($status === 'UNCLEARED')
-                                    <td class="w-full bg-red-500 lg:w-auto p-3 text-white border border-b lg:table-cell relative lg:static">
-                                    @endif
-
-                                    <a href="{{ $url }}">
-                                    {{ $status }}
-                                    </a>
-                                    </td>
-                                    @else
-                                    <td class="w-full bg-gray-300 lg:w-auto p-3 text-white border border-b lg:table-cell relative lg:static"></td>
-                                    @endif
-                                    @if($record->term === '2nd Term')
-                                    @if ($status === 'PAID')
-                                    <td class="w-full bg-green-500 lg:w-auto p-3 text-white border border-b lg:table-cell relative lg:static">
-                                    @elseif ($status === 'PART')
-                                    <td class="w-full bg-yellow-500 lg:w-auto p-3 text-white border border-b lg:table-cell relative lg:static">
-                                    @elseif ($status === 'FREE')
-                                    <td class="w-full bg-purple-500 lg:w-auto p-3 text-white border border-b lg:table-cell relative lg:static">
-                                    @elseif ($status === 'UNCLEARED')
-                                    <td class="w-full bg-red-500 lg:w-auto p-3 text-white border border-b lg:table-cell relative lg:static">
-                                    @endif
-
-                                    <a href="{{ $url }}">
-                                    {{ $status }}
-                                    </a>
-                                    </td>
-                                    @else
-                                    <td class="w-full bg-gray-300 lg:w-auto p-3 text-white border border-b lg:table-cell relative lg:static"></td>
-                                    @endif
-                                    @if($record->term === '3rd Term')
-                                    @if ($status === 'PAID')
-                                    <td class="w-full bg-green-500 lg:w-auto p-3 text-white border border-b lg:table-cell relative lg:static">
-                                    @elseif ($status === 'PART')
-                                    <td class="w-full bg-yellow-500 lg:w-auto p-3 text-white border border-b lg:table-cell relative lg:static">
-                                    @elseif ($status === 'FREE')
-                                    <td class="w-full bg-purple-500 lg:w-auto p-3 text-white border border-b lg:table-cell relative lg:static">
-                                    @elseif ($status === 'UNCLEARED')
-                                    <td class="w-full bg-red-500 lg:w-auto p-3 text-white border border-b lg:table-cell relative lg:static">
-                                    @endif
-
-                                    <a href="{{ $url }}">
-                                    {{ $status }}
-                                    </a>
-                                    </td>
-                                    @else
-                                    <td class="w-full bg-gray-300 lg:w-auto p-3 text-white border border-b lg:table-cell relative lg:static"></td>
-                                    @endif
-                                    @endforeach
+                        $bgColor = 'bg-gray-400';
+                        $TxtColor = 'text-gray-500';
+                        if ($status === 'PAID') {
+                            $bgColor = 'bg-green-500';
+                            $TxtColor = 'text-white';
+                        } elseif ($status === 'PART') {
+                            $bgColor = 'bg-yellow-500';
+                            $TxtColor = 'text-white';
+                        } elseif ($status === 'FREE') {
+                            $bgColor = 'bg-purple-500';
+                            $TxtColor = 'text-white';
+                        } elseif ($status === 'UNCLEARED') {
+                            $bgColor = 'bg-red-500';
+                            $TxtColor = 'text-white';
+                        }
+                    @endphp
+                    <td class="w-full {{ $bgColor }} lg:w-auto p-3 {{ $TxtColor }} border border-b lg:table-cell relative lg:static">
+                        @if ($record)
+                            <a href="{{ $url }}">
+                                {{ $status }}
+                            </a>
+                        @else
+                            {{ $status }}
+                        @endif
+                    </td>
+                @endforeach
                                     
                                   </tr>
 

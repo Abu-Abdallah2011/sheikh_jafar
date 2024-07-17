@@ -22,6 +22,7 @@
                                     <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student Name</th>
                                     <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
                                     <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Average</th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cumm. Average</th>
                                     <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
                                     <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comment</th>
                                 </tr>
@@ -54,6 +55,13 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="inline-block relative w-64">
+                                                
+                                                <input name="cummulativeAverage" value="{{ number_format($cummulativeAverageTotal[$student->id], 2) }}" class="block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500" disabled />
+                                                
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="inline-block relative w-64">
                                                 <input name="position" value="{{ $student->position}}" class="block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500" disabled />
                                             </div>
                                         </td>
@@ -74,15 +82,6 @@
                     </form>
                     <div class="flex items-center justify-end mt-4">
 
-                    {{-- <form method="POST" action="/exams/{{$subject->subject_id}}">
-                        @csrf
-                        @method('DELETE')
-                        <x-danger-button onclick="return confirm('Are you sure you want to delete this record?')">
-                        <i class="fa-solid fa-trash"> 
-                             {{ __('Delete') }}
-                             </i>
-                    </x-danger-button> 
-            </form> --}}
                     </div>
                 </div>
                 </div>

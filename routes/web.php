@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\PDFsController;
 use App\Http\Controllers\setsController;
 use App\Http\Controllers\ExamsController;
 use App\Http\Controllers\HaddaController;
@@ -23,10 +24,30 @@ use App\Http\Controllers\classesCrudController;
 use App\Http\Controllers\teachersAttendanceController;
 use SebastianBergmann\CodeCoverage\Report\Html\Dashboard;
 
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register web routes for your application. These
+| routes are loaded by the RouteServiceProvider within a group which
+| contains the "web" middleware group. Now create something great!
+|
+*/
+
+
+// THIS APPLICATION WAS LAUNCHED IN APRIL 2023, BUT I CAN'T REMEMBER THE PRECISE DATE AS WE WERE SO
+// BUSY TRYING TO DEPLOY THEN TESTS THEN CORRECTIONS AND ADJUSTMENTS AND I FORGOT TO NOTE THE PRECISE DATE
+// BUT I WILL TRY TO RETRACE MY STEPS TO SEE IF I CAN FIND OUT AND IF I DO I WILL NOTE IT DOWN HERE IN SHAA ALLAAH.
+// -Sadiq Mustapha Ahmad. April, 2023.
+// THE LANDING PAGE WAS LAUNCHED ON 16/05/2024 AT AROUND 03:00PM.
+
+//Show Home Page
+Route::get('/', [LandingController::class, 'index']);
 
 //Go To Login Page
-Route::get('/', function () {
-    return view('auth.login');
+Route::get('/login', function () {
+    return view('login');
 });
 
 //Show Users Registration Form
@@ -44,6 +65,10 @@ Route::get('/dashboard', [DashboardController::class, 'view'])
 })->middleware('can:isExecutive');
 
 Route::controller(App\Http\Controllers\DashboardController::class)->group(function () {
+
+//Show Dashboard after Authentication
+// Route::get('/dashboard', 'view')
+// ->middleware(['auth', 'verified'])->name('dashboard');
 
 //Show Dashboard of selected user/Guardian
 Route::get('/dashboard/guardians/{guardian_id}', 'show')
@@ -337,37 +362,38 @@ require __DIR__.'/auth.php';
         Route::get('dashboard/exams/{teacher_id}', 'selectedTeacherExams');
 
         // Show Exam Database
-        Route::get('/exams/show', 'show')->name('exams.show');
+        Route::get('/exams/show', 'show')->middleware('can:isAssistant')->name('exams.show');
 
         // Edit Exam Data
-        Route::get('/exams/{id}/examsEdit', 'edit');
+        Route::get('/exams/{id}/examsEdit', 'edit')->middleware('can:isAssistant');
 
         // Update Exam
-        Route::put('/exams/{id}', 'update');
+        Route::put('/exams/{id}', 'update')->middleware('can:isAssistant');
 
         // Delete Exam
-        Route::delete('/exams/{id}', 'delete')->name('exams.delete');
+        Route::delete('/exams/{id}', 'delete')->name('exams.delete')->middleware('can:isAssistant');
 
         // Select Subjects
-        Route::get('/selectSubjects', 'selectSubjects');
+        Route::get('/selectSubjects', 'selectSubjects')->middleware('can:isAssistant');
 
         // Store Subjects
-        Route::post('/subjectsCreate', 'subjectsCreate');
-
-        // Go To Report Sheet
-        Route::get('/reportSheet/{id}', 'reportSheet');
+        Route::post('/subjectsCreate', 'subjectsCreate')->middleware('can:isAssistant');
 
         // Go To Comment
-        Route::get('/exams/commentEditView', 'examComment');
+        Route::get('/exams/commentEditView', 'examComment')->middleware('can:isAssistant');
 
         // Update Comment
-        Route::put('/exams/{id}/comment_update', 'updateComment');
+        Route::put('/exams/{id}/comment_update', 'updateComment')->middleware('can:isAssistant');
 
         // Go To Prevous Terms Exams Records
         Route::get('/exams/{class}/examsForPreviousTerms', 'examsForPreviousTerms');
 
         // Go To Prevous Terms Cleansheet
-        Route::get('/previousExams/{term}/{session}', 'PreviousTermsCleansheet');
+        Route::get('/previousExams/{term}/{session}', 'PreviousTermsCleansheet')->middleware('can:isAssistant');
+
+        // Go To Prevous Terms Cleansheet
+        Route::get('/ExamsRecords/{id}/PreviousTerms', 'PreviousTermsExamsForParents');
+
         });
 
         // CRUD for Attendance
@@ -394,27 +420,48 @@ require __DIR__.'/auth.php';
             // CRUD for Attendance
     Route::controller(SchoolFeesController::class)->group(function () {
         // Show Fees form
-        Route::get('/fees_record/{studentId}', 'create')->name('fees.create')->middleware('can:isExecutive');
+        Route::get('/fees_record/{studentId}', 'create')->name('fees.create')->middleware('can:isFinance');
 
         // Save Fees information
-        Route::post('/fees_record/{studentId}', 'store')->middleware('can:isExecutive');
+        Route::post('/fees_record/{studentId}', 'store')->middleware('can:isFinance');
 
         // Show Fees Report
-        Route::get('/fees_database/show', 'show')->name('fees.show')->middleware('can:isExecutive');
+        Route::get('/fees_database/show', 'show')->name('fees.show')->middleware('can:isFinance');
 
         // Show Previous Sessions Fees Record
         Route::get('/fees_record/{studentId}/PreviousSessions', 'showPreviousSessions');
 
         // Show Fees Edit Form
-        Route::get('/fees_record/{studentId}/{term}/{session}/edit_fees', 'edit')->middleware('can:isExecutive');
+        Route::get('/fees_record/{studentId}/{term}/{session}/edit_fees', 'edit')->middleware('can:isFinance');
 
         // Update Fees Record
-        Route::put('/fees_record/{studentId}/{term}/{session}/update_fees', 'update')->middleware('can:isExecutive');
+        Route::put('/fees_record/{studentId}/{term}/{session}/update_fees', 'update')->middleware('can:isFinance');
 
         // Delete Fees Record
-        Route::delete('/fees_record/{studentId}/{term}/{session}/delete_fees', 'delete')->middleware('can:isExecutive');
+        Route::delete('/fees_record/{studentId}/{term}/{session}/delete_fees', 'delete')->middleware('can:isFinance');
 
         // Go To Reciept
         Route::get('/reciept/{studentId}/{term}/{session}', 'showStudentRecieptForTerm');
     }); 
+
+    // DOWNLOADING PDFS
+    Route::controller(PDFsController::class)->group(function () {
+        // Go To Report Sheet
+        Route::get('/reportSheet/{id}', 'reportSheet');
+
+        // DOWNLOAD ALL STUDENTS REPORT SHEET FOR A PARTICULAR TERM
+        Route::get('/download-all-reportsheets', 'downloadAllReportSheets')->name('download.all.reportsheets')->middleware('can:isExecutive');
+
+        // DOWNLOAD CLEAN SHEET FOR A CLASS
+        Route::get('/downloadCleanSheets', 'cleanSheets')->name('downloadCleanSheets')->middleware('can:isAssistant');
+
+        // DOWNLOAD REPORT SHEET FOR A CLASS
+        Route::get('/downloadReportSheets', 'reportSheets')->name('downloadReportSheets')->middleware('can:isAssistant');
+
+        // DOWNLOAD ALL CLEAN SHEETS FOR A PARTICULAR TERM
+        Route::get('/download-all-cleansheets', 'downloadAllCleanSheets')->name('download.all.cleansheets')->middleware('can:isExecutive');
+
+        // Download Report Sheet For Guardians
+        Route::get('/reportSheet/{id}/{term}/{session}', 'reportSheetForGuardians');
+    });
    

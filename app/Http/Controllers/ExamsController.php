@@ -2,13 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use Intervention\Image\Facades\Image as PDFMerger;
 use App\Models\sessions;
 use App\Models\ExamsModel;
-use App\Models\register_student;
 use Illuminate\Http\Request;
-use App\Models\register_teacher;
 use App\Models\subjectsModel;
+use App\Models\register_student;
+use App\Models\register_teacher;
 use Illuminate\Support\Facades\Auth;
+use Barryvdh\DomPDF\Facade\PDF as PDF;
+use setasign\Fpdi\Fpdi;
+
 
 class ExamsController extends Controller
 {
@@ -100,6 +104,36 @@ foreach ($teacher->students as $student) {
     $student->averageTotal = $averageTotal;
 }
 
+$cummulativetotalScores = [];
+$cummulativeaverageTotal = [];
+
+foreach ($teacher->students as $student) {
+    $cummulativetotalScores[$student->id] = 0;
+    $cummulativeaverageTotal[$student->id] = 0; 
+    
+    foreach ($student->exams as $subject) {
+
+        $cummulativematchingSubjects = [];
+
+        if ($subject->session == $sessions->session && $subject->student_id == $student->id) {
+            $cummulativematchingSubjects[] = $subject;
+
+        // Calculate the total score for this subject and student
+        $first_cas = is_numeric($subject->first_ca) ? $subject->first_ca : 0;
+        $second_cas = is_numeric($subject->second_ca) ? $subject->second_ca : 0;
+        $third_cas = is_numeric($subject->third_ca) ? $subject->third_ca : 0;
+        $examss = is_numeric($subject->exams) ? $subject->exams : 0;
+
+        $cummulativetotalScores[$student->id] +=  $first_cas + $second_cas + $third_cas + $examss;
+}
+    }
+
+    $cummulativeaverageTotal[$student->id] = count($student->exams->where('session', $sessions->session)) > 0 
+    ? $cummulativetotalScores[$student->id] / count($student->exams->where('session', $sessions->session)) : 0;
+
+    $student->cummulativeaverageTotal = $cummulativeaverageTotal;
+}
+
 // =====================================================
 // POSITION CODES
 // =====================================================
@@ -123,6 +157,7 @@ function addOrdinalSuffix($position) {
 }
 
 $matchingSubjects = [];
+$cummulativematchingSubjects = [];
 
 $orderedStudents = $teacher->students->map(function ($student) use ($sessions,  &$matchingSubjects) {
 
@@ -148,18 +183,42 @@ foreach ($matchingSubjects as $subject) {
     $averageTotal = $examCount > 0 ? $totalScores / $examCount : 0;
     $student->averageTotal = $averageTotal;
 
+    // ADD CUMMULATIVES
+
+    $cummulativematchingSubjects = $student->exams->where('session', $sessions->session)
+    ->where('student_id', $student->id);
+
+    $cummulativeTotalScores = 0;
+    $cummulativeExamCount = count($cummulativematchingSubjects);
+
+    // $sessions = sessions::orderBy('created_at', 'desc')->first();
+
+foreach ($cummulativematchingSubjects as $subject) {
+
+    $first_cas = is_numeric($subject->first_ca) ? $subject->first_ca : 0;
+    $second_cas = is_numeric($subject->second_ca) ? $subject->second_ca : 0;
+    $third_cas = is_numeric($subject->third_ca) ? $subject->third_ca : 0;
+    $examss = is_numeric($subject->exams) ? $subject->exams : 0;
+
+        $cummulativeTotalScores +=  $first_cas + $second_cas + $third_cas + $examss;
+}
+
+    $cummulativeAverageTotal = $cummulativeExamCount > 0 ? $cummulativeTotalScores / $cummulativeExamCount : 0;
+    $student->cummulativeAverageTotal = $cummulativeAverageTotal;
+
     return $student;
-})->sortByDesc('averageTotal');
+})->sortByDesc('cummulativeAverageTotal');
+
 $position = 1;
 $previousAverage = null;
 
 foreach ($orderedStudents as $student) {
-    if ($previousAverage !== null && $student->averageTotal < $previousAverage) {
+    if ($previousAverage !== null && $student->cummulativeAverageTotal < $previousAverage) {
         $position++;
     }
 
     $student->position = addOrdinalSuffix($position);
-    $previousAverage = $student->averageTotal;
+    $previousAverage = $student->cummulativeAverageTotal;
 }
 
  // =====================================================
@@ -181,6 +240,8 @@ $term = sessions::orderBy('created_at', 'desc')->first('term');
                                     'matchingSubjects' => $matchingSubjects,
                                     'session' => $session,
                                     'term' => $term,
+                                    'cummulativeaverageTotal' => $cummulativeaverageTotal,
+                                    'cummulativematchingSubjects' => $cummulativematchingSubjects,
 ]);
 }
 
@@ -273,6 +334,36 @@ foreach ($teacher->students as $student) {
     $student->averageTotal = $averageTotal;
 }
 
+$cummulativetotalScores = [];
+$cummulativeaverageTotal = [];
+
+foreach ($teacher->students as $student) {
+    $cummulativetotalScores[$student->id] = 0;
+    $cummulativeaverageTotal[$student->id] = 0; 
+    
+    foreach ($student->exams as $subject) {
+
+        $cummulativematchingSubjects = [];
+
+        if ($subject->session == $sessions->session && $subject->student_id == $student->id) {
+            $cummulativematchingSubjects[] = $subject;
+
+        // Calculate the total score for this subject and student
+        $first_cas = is_numeric($subject->first_ca) ? $subject->first_ca : 0;
+        $second_cas = is_numeric($subject->second_ca) ? $subject->second_ca : 0;
+        $third_cas = is_numeric($subject->third_ca) ? $subject->third_ca : 0;
+        $examss = is_numeric($subject->exams) ? $subject->exams : 0;
+
+        $cummulativetotalScores[$student->id] +=  $first_cas + $second_cas + $third_cas + $examss;
+}
+    }
+
+    $cummulativeaverageTotal[$student->id] = count($student->exams->where('session', $sessions->session)) > 0 
+    ? $cummulativetotalScores[$student->id] / count($student->exams->where('session', $sessions->session)) : 0;
+
+    $student->cummulativeaverageTotal = $cummulativeaverageTotal;
+}
+
 // =====================================================
 // POSITION CODES
 // =====================================================
@@ -300,7 +391,7 @@ function teacherOrdinalSuffix($position) {
 $orderedStudents = $teacher->students->map(function ($student) use ($sessions,  &$matchingSubjects) {
 
     $matchingSubjects = $student->exams->where('session', $sessions->session)
-    ->where('term', $sessions->term)
+    // ->where('term', $sessions->term)
     ->where('student_id', $student->id);
     $totalScores = 0;
     $examCount = count($matchingSubjects);
@@ -352,6 +443,8 @@ $term = sessions::orderBy('created_at', 'desc')->first('term');
                                     'matchingSubjects' => $matchingSubjects,
                                     'session' => $session,
                                     'term' => $term,
+                                    'cummulativeaverageTotal' => $cummulativeaverageTotal,
+                                    'cummulativematchingSubjects' => $cummulativematchingSubjects,
 ]);
 }
 
@@ -433,8 +526,7 @@ public function examComment(){
 
     $studentIds = $teacher->students->pluck('id');
 
-    $exam = ExamsModel::whereIn('student_id', $teacher->students->pluck('id'))
-    ->get();
+    $exam = ExamsModel::whereIn('student_id', $studentIds)->get();
 
     // ===========================================================================
     // TOTAL SCORES AND AVERAGE CODES IN COMMENT CONTROLLER
@@ -468,6 +560,33 @@ foreach ($teacher->students as $student) {
     $student->averageTotal = $averageTotal;
 }
 
+$cummulativeTotalScores = [];
+$cummulativeAverageTotal = [];
+
+foreach ($teacher->students as $student) {
+$cummulativeTotalScores[$student->id] = 0;
+$cummulativeAverageTotal[$student->id] = 0; 
+
+foreach ($student->exams as $subject) {
+
+    if (
+        $subject->session === $sessions->session
+    ) {
+
+    $first_ca = is_numeric($subject['first_ca']) ? $subject['first_ca'] : 0;
+    $second_ca = is_numeric($subject['second_ca']) ? $subject['second_ca'] : 0;
+    $third_ca = is_numeric($subject['third_ca']) ? $subject['third_ca'] : 0;
+    $exams = is_numeric($subject['exams']) ? $subject['exams'] : 0;
+
+    $cummulativeTotalScores[$student->id] +=  $first_ca + $second_ca + $third_ca + $exams;
+}
+}
+
+$cummulativeAverageTotal[$student->id] = count($student->exams->where('session', $sessions->session)) > 0 ? $cummulativeTotalScores[$student->id] / count($student->exams->where('session', $sessions->session)) : 0;
+
+$student->cummulativeAverageTotal = $cummulativeAverageTotal;
+}
+
     // ===========================================================================
     // END OF TOTAL SCORES AND AVERAGE CODES IN COMMENT CONTROLLER
     // ===========================================================================
@@ -497,12 +616,11 @@ function OrdinalSuffix($position) {
 $orderedStudents = $teacher->students->map(function ($student) {
     $totalScores = 0;
     $sessions = sessions::orderBy('created_at', 'desc')->first();
-    $examCount = count($student->exams->where('term', $sessions->term)->where('session', $sessions->session));
+    $examCount = count($student->exams->where('session', $sessions->session));
 
     foreach ($student->exams as $subject) {
 
         if (
-            $subject->term === $sessions->term &&
             $subject->session === $sessions->session
         ) {
         $first_ca = is_numeric($subject['first_ca']) ? $subject['first_ca'] : 0;
@@ -542,6 +660,7 @@ foreach ($orderedStudents as $student) {
     'totalScores' => $totalScores,
     'averageTotal' => $averageTotal,
     'orderedStudents' => $orderedStudents,
+    'cummulativeAverageTotal' => $cummulativeAverageTotal,
 ]
 );
 }
@@ -635,8 +754,10 @@ public function subjectsCreate(Request $request){
             $record->session = $session;
             $record->term = $term;
 
+            // if(!$record) {
             // Associate the exam record with the student
             $record->save();
+            // }
         }
     }
 
@@ -703,150 +824,6 @@ public function delete($id) {
         ->delete();
 
     return redirect('/exams/show')->with('message', 'Subject Deleted Successfully!');
-}
-
-
-//Show Report Sheet
-public function reportSheet($id){
-
-    $session = sessions::pluck('session')->last();
-    $term = sessions::pluck('term')->last();
-
-    $exam = ExamsModel::where('student_id', $id)->where('term', $term)->where('session', $session)->get();
-
-    $sessions = sessions::orderBy('created_at', 'desc')->first();
-
-    $subjects = subjectsModel::whereIn('subject', $exam->pluck('subject_id'))->get();
-
-    $class = register_teacher::where('user_id', Auth::user()->id)->value('class');
-
-    $teacher = register_teacher::where('class', $class)->where('user_id', auth()->user()->id)
-    ->with(['students' => function ($query) 
-    {
-        $query->where('status', 'IN SCHOOL')
-        ->orWhere('grad_type', 'TARTEEL ZALLA');
-    }, 'students.attendance'])
-    ->first();
-
-    $dalibi = register_student::where('id', $id)->first();
-
-    $class = register_student::where('class', $dalibi->class)
-    ->where('status', 'IN SCHOOL')
-    ->count();
-
-    $totalCa = [];
-
-    $totalCa[$id] = [];
-
-    foreach ($dalibi->exams as $subject) {
-        if ($subject->term == $term && $subject->session == $session) {
-            $subjectId = $subject->subject_id;
-            $studentId = $subject->student_id;
-            
-            $totalCa[$subjectId] = $subject->first_ca + $subject->second_ca + $subject->third_ca;
-            $totalScores[$subjectId] = $subject->first_ca + $subject->second_ca + $subject->third_ca + $subject->exams;
-            $totalExam[$subjectId] = $subject->exams;
-            
-            // Calculate grand total and average total outside the loop
-            if (!isset($grandTotal[$studentId])) {
-                $grandTotal[$studentId] = 0;
-            }
-            $grandTotal[$studentId] += $totalScores[$subjectId];
-            $averageTotal[$studentId] = count($dalibi->exams) > 0 ? $grandTotal[$studentId] / count($dalibi->exams->where('term', $term)->where('session', $session)) : 0;
-        }
-    }
-    
-    $attendanceRecords[$dalibi->id] = $dalibi->attendance->where('term', $term)->where('session', $session)->filter(function ($record) {
-        return in_array($record->status, ['Present', 'present', 'Late', 'late', 'excused', 'Excused']);
-    });
-
-    $totalAttendanceRecords = $dalibi->attendance->where('term', $term)->where('session', $session)->count();
-    $presentAttendanceRecords = $attendanceRecords[$dalibi->id]->count();
-    $percentage = $totalAttendanceRecords > 0 ? ($presentAttendanceRecords / $totalAttendanceRecords) * 100 : 0;
-    $dalibi->attendancePercentage = $percentage;
-
-    // =====================================================
-// POSITION CODES
-// =====================================================
-
-// Function to add ordinal suffix
-function resultOrdinalSuffix($position) {
-    if ($position % 100 >= 11 && $position % 100 <= 13) {
-        return $position . 'th';
-    } else {
-        switch ($position % 10) {
-            case 1:
-                return $position . 'st';
-            case 2:
-                return $position . 'nd';
-            case 3:
-                return $position . 'rd';
-            default:
-                return $position . 'th';
-        }
-    }
-}
-
-$matchingSubjects = [];
-
-// $session = str_replace('_', '/', $session);
-
-$orderedStudents = $teacher->students->map(function ($student) use ($session, $term,  &$matchingSubjects) {
-
-    $matchingSubjects = $student->exams->where('session', str_replace('_', '/', $session))
-    ->where('term', $term)
-    ->where('student_id', $student->id);
-
-    $totalScores = 0;
-    $examCount = count($matchingSubjects);
-
-    // $sessions = sessions::orderBy('created_at', 'desc')->first();
-
-foreach ($matchingSubjects as $subject) {
-
-    $first_cas = is_numeric($subject->first_ca) ? $subject->first_ca : 0;
-    $second_cas = is_numeric($subject->second_ca) ? $subject->second_ca : 0;
-    $third_cas = is_numeric($subject->third_ca) ? $subject->third_ca : 0;
-    $examss = is_numeric($subject->exams) ? $subject->exams : 0;
-
-        $totalScores +=  $first_cas + $second_cas + $third_cas + $examss;
-}
-
-    $averageTotal = $examCount > 0 ? $totalScores / $examCount : 0;
-    $student->averageTotal = $averageTotal;
-
-    return $student;
-})->sortByDesc('averageTotal');
-$position = 1;
-$previousAverage = null;
-
-foreach ($orderedStudents as $student) {
-    if ($previousAverage !== null && $student->averageTotal < $previousAverage) {
-        $position++;
-    }
-
-    $student->position = resultOrdinalSuffix($position);
-    $previousAverage = $student->averageTotal;
-}
-
- // =====================================================
-// END OF POSITION CODES
-// =====================================================
-
-    return view('Exams.reportSheet', [
-                'sessions' => $sessions, 
-                'student' => $student,
-                'class' => $class,
-                'exam' => $exam,
-                'subjects' => $subjects,
-                'totalCa' => $totalCa,
-                'totalScores' => $totalScores,
-                'totalExam' => $totalExam,
-                'grandTotal' => $grandTotal,
-                'averageTotal' => $averageTotal,
-                'dalibi' => $dalibi,
-                // 'sakamako' => $sakamako,
-]);
 }
 
 
@@ -927,6 +904,9 @@ foreach ($teacher->students as $student) {
                                   ->get();
 
         foreach ($matchingSubjects as $subject) {
+            if (!isset($totalCa[$student->id][$subject->subject_id])) {
+                $totalCa[$student->id][$subject->subject_id] = 0;
+            }
         // Calculate the total CA score for this subject and student
         $first_cas = is_numeric($subject->first_ca) ? $subject->first_ca : 0;
         $second_cas = is_numeric($subject->second_ca) ? $subject->second_ca : 0;
@@ -968,6 +948,78 @@ foreach ($teacher->students as $student) {
     $student->averageTotal = $averageTotal;
 }
 
+// Initialize an array to store the Cummulative total scores for each student
+// $cummulativetotalScores = [];
+// $cummulativeaverageTotal = [];
+
+// foreach ($teacher->students as $student) {
+//     $cummulativetotalScores[$student->id] = 0;
+//     $cummulativeaverageTotal[$student->id] = 0; 
+    
+//     foreach ($student->exams as $subject) {
+
+//         $cummulativematchingSubjects = [];
+
+//         if ($subject->session == str_replace('_', '/', $session) && $subject->student_id == $student->id) {
+//             $cummulativematchingSubjects[] = $subject;
+
+//         // Calculate the total score for this subject and student
+//         $first_cas = is_numeric($subject->first_ca) ? $subject->first_ca : 0;
+//         $second_cas = is_numeric($subject->second_ca) ? $subject->second_ca : 0;
+//         $third_cas = is_numeric($subject->third_ca) ? $subject->third_ca : 0;
+//         $examss = is_numeric($subject->exams) ? $subject->exams : 0;
+
+//         $cummulativetotalScores[$student->id] +=  $first_cas + $second_cas + $third_cas + $examss;
+// }
+//     }
+
+//     $cummulativeaverageTotal[$student->id] = count($student->exams->where('session', str_replace('_', '/', $session))) > 0 
+//     ? $cummulativetotalScores[$student->id] / count($student->exams->where('session', str_replace('_', '/', $session))) : 0;
+
+//     $student->cummulativeaverageTotal = $cummulativeaverageTotal;
+// }
+
+// Initialize an array to store the Cumulative total scores for each student
+$cummulativetotalScores = [];
+$cummulativeaverageTotal = [];
+
+foreach ($teacher->students as $student) {
+    $cummulativetotalScores[$student->id] = 0;
+    $cummulativeaverageTotal[$student->id] = 0; 
+    
+    $cummulativematchingSubjects = $student->exams
+        ->where('session', str_replace('_', '/', $session))
+        ->where('student_id', $student->id)
+        ->filter(function ($exam) use ($term) {
+            // Ensure we only consider terms up to and including the selected term
+            return $this->termOrder($exam->term) <= $this->termOrder($term);
+        });
+
+    foreach ($cummulativematchingSubjects as $subject) {
+        // Calculate the total score for this subject and student
+        $first_cas = is_numeric($subject->first_ca) ? $subject->first_ca : 0;
+        $second_cas = is_numeric($subject->second_ca) ? $subject->second_ca : 0;
+        $third_cas = is_numeric($subject->third_ca) ? $subject->third_ca : 0;
+        $examss = is_numeric($subject->exams) ? $subject->exams : 0;
+
+        $cummulativetotalScores[$student->id] +=  $first_cas + $second_cas + $third_cas + $examss;
+    }
+
+    $cummulativeExamCount = count($cummulativematchingSubjects);
+    $cummulativeaverageTotal[$student->id] = $cummulativeExamCount > 0 
+        ? $cummulativetotalScores[$student->id] / $cummulativeExamCount 
+        : 0;
+
+    $student->cummulativeaverageTotal = $cummulativeaverageTotal[$student->id];
+}
+
+/**
+ * Convert term names to a comparable order value.
+ *
+ * @param string $term
+ * @return int
+ */
+
 // =====================================================
 // POSITION CODES
 // =====================================================
@@ -991,19 +1043,18 @@ function previousTermOrdinalSuffix($position) {
 }
 
 $matchingSubjects = [];
+$cummulativematchingSubjects = [];
 
-// $session = str_replace('_', '/', $session);
+$orderedStudents = $teacher->students->map(function ($student) use ($sessions,  &$matchingSubjects) {
 
-$orderedStudents = $teacher->students->map(function ($student) use ($session, $term,  &$matchingSubjects) {
-
-    $matchingSubjects = $student->exams->where('session', str_replace('_', '/', $session))
-    ->where('term', $term)
+    $matchingSubjects = $student->exams->where('session', $sessions->session)
+    ->where('term', $sessions->term)
     ->where('student_id', $student->id);
 
     $totalScores = 0;
     $examCount = count($matchingSubjects);
 
-    // $sessions = sessions::orderBy('created_at', 'desc')->first();
+    $sessions = sessions::orderBy('created_at', 'desc')->first();
 
 foreach ($matchingSubjects as $subject) {
 
@@ -1018,20 +1069,41 @@ foreach ($matchingSubjects as $subject) {
     $averageTotal = $examCount > 0 ? $totalScores / $examCount : 0;
     $student->averageTotal = $averageTotal;
 
+    // ADD CUMMULATIVES
+
+    $cummulativematchingSubjects = $student->exams->where('session', $sessions->session)
+    ->where('student_id', $student->id);
+
+    $cummulativeTotalScores = 0;
+    $cummulativeExamCount = count($cummulativematchingSubjects);
+
+foreach ($cummulativematchingSubjects as $subject) {
+
+    $first_cas = is_numeric($subject->first_ca) ? $subject->first_ca : 0;
+    $second_cas = is_numeric($subject->second_ca) ? $subject->second_ca : 0;
+    $third_cas = is_numeric($subject->third_ca) ? $subject->third_ca : 0;
+    $examss = is_numeric($subject->exams) ? $subject->exams : 0;
+
+        $cummulativeTotalScores +=  $first_cas + $second_cas + $third_cas + $examss;
+}
+
+    $cummulativeAverageTotal = $cummulativeExamCount > 0 ? $cummulativeTotalScores / $cummulativeExamCount : 0;
+    $student->cummulativeAverageTotal = $cummulativeAverageTotal;
+
     return $student;
-})->sortByDesc('averageTotal');
+})->sortByDesc('cummulativeAverageTotal');
+
 $position = 1;
 $previousAverage = null;
 
 foreach ($orderedStudents as $student) {
-    if ($previousAverage !== null && $student->averageTotal < $previousAverage) {
+    if ($previousAverage !== null && $student->cummulativeAverageTotal < $previousAverage) {
         $position++;
     }
 
     $student->position = previousTermOrdinalSuffix($position);
-    $previousAverage = $student->averageTotal;
+    $previousAverage = $student->cummulativeAverageTotal;
 }
-
  // =====================================================
 // END OF POSITION CODES
 // =====================================================
@@ -1051,6 +1123,38 @@ $term = sessions::orderBy('created_at', 'desc')->first('term');
                                     'matchingSubjects' => $matchingSubjects,
                                     'session' => $session,
                                     'term' => $term,
+                                    'cummulativeaverageTotal' => $cummulativeaverageTotal,
+                                    'cummulativematchingSubjects' => $cummulativematchingSubjects,
+]);
+}
+
+private function termOrder($term) {
+    $terms = [
+        '1st Term' => 1,
+        '2nd Term' => 2,
+        '3rd Term' => 3,
+    ];
+
+    return $terms[$term] ?? 0;
+}
+
+//Show Previous Terms For Parents
+public function PreviousTermsExamsForParents($id){
+
+    $session = sessions::pluck('session')->last();
+    $term = sessions::pluck('term')->last();
+
+    $student = register_student::where('id', $id)
+    ->with('exams')
+    ->first();
+
+$exam = $student->exams->filter(function($exam) use ($term, $session) {
+    return $exam->term != $term || $exam->session != $session;
+}); 
+
+    return view('Exams.ExamsPreviousTermsForParents', [
+                'exam' => $exam,
+                'student' => $student,
 ]);
 }
 
