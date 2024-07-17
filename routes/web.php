@@ -43,10 +43,10 @@ use SebastianBergmann\CodeCoverage\Report\Html\Dashboard;
 // THE LANDING PAGE WAS LAUNCHED ON 16/05/2024 AT AROUND 03:00PM.
 
 //Show Home Page
-Route::get('/', [LandingController::class, 'index']);
+// Route::get('/', [LandingController::class, 'index']);
 
 //Go To Login Page
-Route::get('/login', function () {
+Route::get('/', function () {
     return view('login');
 });
 
