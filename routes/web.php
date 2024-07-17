@@ -47,7 +47,7 @@ use SebastianBergmann\CodeCoverage\Report\Html\Dashboard;
 
 //Go To Login Page
 Route::get('/', function () {
-    return view('login');
+    return view('auth.login');
 });
 
 //Show Users Registration Form
