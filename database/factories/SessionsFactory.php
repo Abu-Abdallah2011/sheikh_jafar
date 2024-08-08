@@ -17,7 +17,7 @@ class SessionsFactory extends Factory
     public function definition()
     {
         return [
-            'session' => '2023/2023',
+            'session' => '2023/2024',
             'term' => '1st Term',
         ];
     }
