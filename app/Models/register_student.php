@@ -74,6 +74,7 @@ class register_student extends Model
         'set',
         'created_by',
         'edited_by',
+        'admn_no',
     ];
 
     public function scopeFilter($query, array $filters){
@@ -89,6 +90,7 @@ class register_student extends Model
             ->orWhere('gender', 'like', '%' . request('search') . '%')
             ->orWhere('relationship', 'like', '%' . request('search') . '%')
             ->orWhere('id', 'like', '%' . request('search') . '%')
+            ->orWhere('admn_no', 'like', '%' . request('search') . '%')
             ->orWhere('set', 'like', '%' . request('search') . '%');
         }
     }

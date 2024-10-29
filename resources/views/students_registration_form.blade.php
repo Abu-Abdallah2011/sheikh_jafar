@@ -17,6 +17,13 @@
                         <form method="POST" action="{{ url('students_registration_form') }}" enctype="multipart/form-data">
                             @csrf
                     
+                            <!-- Admission Number -->
+                            <div>
+                                <x-input-label for="admn_no" :value="__('Admission Number')" />
+                                <x-text-input id="admn_no" class="block mt-1 w-full" type="text" name="admn_no" :value="old('admn_no')" autofocus autocomplete="admn_no" />
+                                <x-input-error :messages="$errors->get('admn_no')" class="mt-2" />
+                            </div>
+
                             <!-- Fullname -->
                             <div>
                                 <x-input-label for="fullname" :value="__('Fullname')" />

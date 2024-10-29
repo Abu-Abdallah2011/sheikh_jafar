@@ -76,6 +76,9 @@ class StudentFormRequest extends FormRequest
             'set' => [
                 'max:255'
             ],
+            'admn_no' => [
+                'max:255'
+            ],
 
         ];
     }

@@ -218,7 +218,7 @@ return [
 
         'PDF' => Barryvdh\DomPDF\Facade\Pdf::class,
 
-        'Image' => Intervention\Image\Facades\Image::class,
+        // 'Image' => Intervention\Image\Facades\Image::class,
     ])->toArray(),
 
 ];

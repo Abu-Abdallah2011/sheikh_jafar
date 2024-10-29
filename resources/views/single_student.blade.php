@@ -19,6 +19,11 @@
                                 <h3 class="text-2xl">
                                    ID: {{$student->id}}
                                 </h3>
+
+                                <div>
+                                    <h3 class="text-2xl">
+                                       ADMISSION NUMBER: {{$student->admn_no}}
+                                    </h3>
                        
                             <div>
                         <h3 class="text-2xl">
@@ -101,7 +106,7 @@
                                 @endcan
                         </div>
                     </div>
-                    
+                                </div>
                 </div>
             </div>
             </div>
