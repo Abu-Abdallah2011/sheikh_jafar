@@ -747,17 +747,25 @@ public function subjectsCreate(Request $request){
     foreach ($teacher->students as $student) {
         // Loop through selected subjects for association
         foreach ($selectedSubjectIds as $subjectId) {
-            // Create a new exam record
+            
+            $existingRecord = ExamsModel::where('subject_id', $subjectId)
+            ->where('student_id', $student->id)
+            ->where('session', $session)
+            ->where('term', $term)
+            ->first();
+
+            if (!$existingRecord) {
             $record = new ExamsModel();
             $record->subject_id = $subjectId;
             $record->student_id = $student->id;
+            $record->class = $student->class;
             $record->session = $session;
             $record->term = $term;
 
-            // if(!$record) {
-            // Associate the exam record with the student
             $record->save();
-            // }
+
+        }
+
         }
     }
 
