@@ -12,7 +12,7 @@
                     <div class="font-bold">
                         @can('isAdGuardian')
                         <div class="grid grid-flow-col col-md-6 text-right">
-                            <img class="w-48 mr-6 md:block" src="{{ asset('storage/' . $student->photo) }}" alt="" />
+                            <img class="w-48 mr-6 md:block" src="{{ Storage::disk('s3')->url($student->photo) }}" alt="" />
                         </div>
                         @endcan
                             <div>
