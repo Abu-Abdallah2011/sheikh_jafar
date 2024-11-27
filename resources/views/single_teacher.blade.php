@@ -10,7 +10,9 @@
                 <div class="flex">
                     <div class="">
                         <div class="grid grid-flow-col col-md-6 text-right">
+                            @if ($student->photo)
                             <img class="w-48 mr-6 md:block" src="{{ Storage::disk('s3')->url($teacher->photo) }}" alt="" />
+                            @endif
                         </div>
                             <div>
                                 <h5 class="text-base">

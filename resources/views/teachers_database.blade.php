@@ -24,7 +24,9 @@
                 <div class="bg-red-300 border border-gray-200 rounded p-6">
                     @endif
                 <div class="flex">
-                    <a href="{{ Storage::disk('s3')->url($teacher->photo) }}"><img class="hidden w-48 mr-6 md:block" src="{{ Storage::disk('s3')->url($teacher->photo) }}" alt="" /></a>
+                    @if ($student->photo)
+                    <img class="hidden w-48 mr-6 md:block" src="{{ Storage::disk('s3')->url($teacher->photo) }}" alt="" />
+                    @endif
                     
                     <div class="font-bold">
                         <h3 class="text-2xl">
