@@ -17,5 +17,6 @@ class sessions extends Model
         'term_starts',
         'term_ends',
         'next_term_starts',
+        'days',
     ];
 }

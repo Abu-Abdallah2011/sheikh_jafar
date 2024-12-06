@@ -24,6 +24,7 @@
                                     <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">2nd C.A</th>
                                     <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">3rd C.A</th>
                                     <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Exam</th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Days Present</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
@@ -59,6 +60,11 @@
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="inline-block relative w-64">
                                                 <input name="scores[{{ $student->id }}][{{ $subject->subject_id }}][exams]" value="{{ $subject['exams'] }}" class="block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500" />
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="inline-block relative w-64">
+                                                <input name="scores[{{ $student->id }}][{{ $subject->subject_id }}][days_present]" value="{{ $subject['days_present'] }}" class="block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500" />
                                             </div>
                                         </td>
                                     </tr>

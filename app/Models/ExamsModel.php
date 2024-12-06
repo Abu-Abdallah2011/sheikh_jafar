@@ -35,6 +35,7 @@ class ExamsModel extends Model
         'session',
         'comment',
         'class',
+        'days_present',
 
         
     ];

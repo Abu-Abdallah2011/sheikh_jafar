@@ -252,18 +252,84 @@ public function reportSheet($id){
     ->orwhere('status', 'TARTEEL ZALLA')
     ->count();
 
+    $totalDays = Sessions::where('term', $term)
+    ->where('session', $session)
+    ->pluck('days')
+    ->first();
+
+if (!$totalDays) {
+    throw new \Exception('No session days found for the given term and session.');
+}
+
+$daysPresent = ExamsModel::whereNotNull('days_present')
+    ->where('term', $term)
+    ->where('session', $session)
+    ->where('student_id', $id)
+    ->first();
+
+if (!$daysPresent) {
+    throw new \Exception('No attendance record found for the given student, term, and session.');
+}
+
+$daysPresentRecord = $daysPresent->days_present;
+
+if ($totalDays > 0) {
+    $attendanceRecord = ($daysPresentRecord / $totalDays) * 100;
+} else {
+    $attendanceRecord = 0;
+}
+
+
     $totalCa = [];
 
     $totalCa[$id] = [];
+
+    $first_cas = [];
+    $first_cas[$id] = [];
+
+    $second_cas = [];
+    $second_cas[$id] = [];
 
     foreach ($dalibi->exams as $subject) {
         if ($subject->term == $term && $subject->session == $session) {
             $subjectId = $subject->subject_id;
             $studentId = $subject->student_id;
+
+            $first_cas[$subjectId] = $subject->first_ca;
+            $second_cas[$subjectId] = $subject->second_ca;
             
             $totalCa[$subjectId] = $subject->first_ca + $subject->second_ca + $subject->third_ca;
             $totalScores[$subjectId] = $subject->first_ca + $subject->second_ca + $subject->third_ca + $subject->exams;
             $totalExam[$subjectId] = $subject->exams;
+
+            if (!isset($totalScores[$subjectId])) {
+                $totalScores[$subjectId] = 0; 
+            }
+
+            if ($totalScores[$subjectId] >= 80) {
+                $grade[$subjectId] = 'A';
+                $remark[$subjectId] = 'Excellent';
+            } elseif ($totalScores[$subjectId] >= 70 && $totalScores[$subjectId] < 80) {
+                $grade[$subjectId] = 'B';
+                $remark[$subjectId] = 'V. Good';
+            } elseif ($totalScores[$subjectId] >= 60 && $totalScores[$subjectId] < 70) { 
+                $grade[$subjectId] = 'C';
+                $remark[$subjectId] = 'Good';
+            } elseif ($totalScores[$subjectId] >= 50 && $totalScores[$subjectId] < 60) {
+                $grade[$subjectId] = 'D';
+                $remark[$subjectId] = 'Pass';
+            } elseif ($totalScores[$subjectId] >= 0 && $totalScores[$subjectId] < 50) {
+                $grade[$subjectId] = 'F';
+                $remark[$subjectId] = 'Fail';
+            } else {
+                $grade[$subjectId] = '-';
+                $remark[$subjectId] = 'Invalid Score'; 
+            }
+            
+            // Assign the values to the subject
+            $subject->grade = $grade[$subjectId];
+            $subject->remark = $remark[$subjectId];
+            
             
             // Calculate grand total and average total outside the loop
             if (!isset($grandTotal[$studentId])) {
@@ -271,6 +337,26 @@ public function reportSheet($id){
             }
             $grandTotal[$studentId] += $totalScores[$subjectId];
             $averageTotal[$studentId] = count($dalibi->exams) > 0 ? $grandTotal[$studentId] / count($dalibi->exams->where('term', $term)->where('session', $session)) : 0;
+
+            if ($averageTotal[$studentId] >= 80) {
+                $TeachersRemark[$studentId] = 'An Excellent result!';
+                $PrincipalsRemark[$studentId] = 'An Excellent result, keep it up';
+            } elseif ($averageTotal[$studentId] >= 70 && $averageTotal[$studentId] < 80) {
+                $TeachersRemark[$studentId] = 'A Very Good Result!';
+                $PrincipalsRemark[$studentId] = 'A Very Good result, keep it up.';
+            } elseif ($averageTotal[$studentId] >= 60 && $averageTotal[$studentId] < 70) { 
+                $TeachersRemark[$studentId] = 'Good result.';
+                $PrincipalsRemark[$studentId] = 'Good result, put more effort.';
+            } elseif ($averageTotal[$studentId] >= 50 && $averageTotal[$studentId] < 60) {
+                $TeachersRemark[$studentId] = 'You can do better.';
+                $PrincipalsRemark[$studentId] = 'Put more effort.';
+            } elseif ($averageTotal[$studentId] >= 0 && $averageTotal[$studentId] < 50) {
+                $TeachersRemark[$studentId] = 'Try harder.';
+                $PrincipalsRemark[$studentId] = 'Work harder.';
+            } else {
+                $TeachersRemark[$studentId] = '';
+                $PrincipalsRemark[$studentId] = ''; // Handles any unexpected scores
+            }
         }
     }
 
@@ -386,26 +472,56 @@ foreach ($student->exams as $jarabawa) {
  $student = register_student::findOrFail($id);
 
  // Generate PDF using Dompdf
- $pdf = PDF::loadView('PDFs.reportSheet', [
-    'sessions' => $sessions, 
-    'student' => $student,
-    'class' => $class,
-    'exam' => $exam,
-    'subjects' => $subjects,
-    'totalCa' => $totalCa,
-    'totalScores' => $totalScores,
-    'totalExam' => $totalExam,
-    'grandTotal' => $grandTotal,
-    'averageTotal' => $averageTotal,
-    'dalibi' => $dalibi,
-    'studentPosition' => $studentPosition,
-    'cummulativeAverageTotal' => $cummulativeAverageTotal,
-]);
+//  $pdf = PDF::loadView('PDFs.reportSheet', [
+//     'sessions' => $sessions, 
+//     'student' => $student,
+//     'class' => $class,
+//     'exam' => $exam,
+//     'subjects' => $subjects,
+//     'totalCa' => $totalCa,
+//     'totalScores' => $totalScores,
+//     'totalExam' => $totalExam,
+//     'grandTotal' => $grandTotal,
+//     'averageTotal' => $averageTotal,
+//     'dalibi' => $dalibi,
+//     'studentPosition' => $studentPosition,
+//     'cummulativeAverageTotal' => $cummulativeAverageTotal,
+// ]);
 
  // Return a response with PDF content to download
- return $pdf->download($dalibi->fullname);
+//  return $pdf->download($dalibi->fullname);
 
+    $pdf = PDF::loadView('PDFs.reportSheet', [
+        'sessions' => $sessions, 
+        'student' => $student,
+        'class' => $class,
+        'exam' => $exam,
+        'subjects' => $subjects,
+        'totalCa' => $totalCa,
+        'totalScores' => $totalScores,
+        'second_cas' => $second_cas,
+        'first_cas' => $first_cas,
+        'totalExam' => $totalExam,
+        'grandTotal' => $grandTotal,
+        'averageTotal' => $averageTotal,
+        'grade' => $grade,
+        'remark' => $remark,
+        'TeachersRemark' => $TeachersRemark,
+        'PrincipalsRemark' => $PrincipalsRemark,
+        'dalibi' => $dalibi,
+        'studentPosition' => $studentPosition,
+        'cummulativeAverageTotal' => $cummulativeAverageTotal,
+        'attendanceRecord' => $attendanceRecord,
+    ])
+        ->setPaper('a4')
+        ->setOption('isHtml5ParserEnabled', true)
+        ->setOption('isPhpEnabled', true)
+        ->setOption('isRemoteEnabled', true)
+        ->setOption('chroot', public_path('/'));
+        
+    return $pdf->download('report-sheet.pdf');
 }
+
 
 // DOWNLOAD ALL REPORT SHEETS OF STUDENTS
 public function downloadAllReportSheets()
@@ -627,6 +743,15 @@ public function downloadAllReportSheets()
 
     $students = $teacher->students;
 
+    $totalDays = Sessions::where('term', $term)
+                ->where('session', $sessionName)
+                ->pluck('days')
+                ->first();
+
+            if (!$totalDays) {
+                throw new \Exception('No session days found for the given term and session.');
+            }
+
     $mergedPdf = new \setasign\Fpdi\Fpdi();
     $mergedPdfFileName = storage_path('app/' . $term . ' ' . str_replace('/', '_', $sessionName) . ' ' . 'Academic Session' . '.pdf');
 
@@ -636,9 +761,29 @@ public function downloadAllReportSheets()
             ->where('session', $sessionName)
             ->get();
 
+            $daysPresent = ExamsModel::whereNotNull('days_present')
+                ->where('term', $term)
+                ->where('session', $sessionName)
+                ->where('student_id', $student->id)
+                ->first();
+
+            if (!$daysPresent) {
+                throw new \Exception('No attendance record found for the given student, term, and session.');
+            }
+
+            $daysPresentRecord = $daysPresent->days_present;
+
+            if ($totalDays > 0) {
+                $attendanceRecord = ($daysPresentRecord / $totalDays) * 100;
+            } else {
+                $attendanceRecord = 0;
+            }
+
         $subjects = SubjectsModel::whereIn('subject', $exam->pluck('subject_id'))->get();
         $classCount = $students->count();
 
+        $first_cas = [];
+        $second_cas = [];
         $totalCa = [];
         $totalScores = [];
         $totalExam = [];
@@ -646,9 +791,39 @@ public function downloadAllReportSheets()
 
         foreach ($exam as $subject) {
             $subjectId = $subject->subject_id;
+            $first_cas[$subjectId] = $subject->first_ca;
+            $second_cas[$subjectId] = $subject->second_ca;
             $totalCa[$subjectId] = $subject->first_ca + $subject->second_ca + $subject->third_ca;
             $totalScores[$subjectId] = $totalCa[$subjectId] + $subject->exams;
             $totalExam[$subjectId] = $subject->exams;
+
+            if (!isset($totalScores[$subjectId])) {
+                $totalScores[$subjectId] = 0; // Default to 0 if not set
+            }
+
+            if ($totalScores[$subjectId] >= 80) {
+                $grade[$subjectId] = 'A';
+                $remark[$subjectId] = 'Excellent';
+            } elseif ($totalScores[$subjectId] >= 70 && $totalScores[$subjectId] < 80) {
+                $grade[$subjectId] = 'B';
+                $remark[$subjectId] = 'V. Good';
+            } elseif ($totalScores[$subjectId] >= 60 && $totalScores[$subjectId] < 70) { 
+                $grade[$subjectId] = 'C';
+                $remark[$subjectId] = 'Good';
+            } elseif ($totalScores[$subjectId] >= 50 && $totalScores[$subjectId] < 60) {
+                $grade[$subjectId] = 'D';
+                $remark[$subjectId] = 'Pass';
+            } elseif ($totalScores[$subjectId] >= 0 && $totalScores[$subjectId] < 50) {
+                $grade[$subjectId] = 'F';
+                $remark[$subjectId] = 'Fail';
+            } else {
+                $grade[$subjectId] = '-';
+                $remark[$subjectId] = 'Invalid Score'; // Handles any unexpected scores
+            }
+            
+            // Assign the values to the subject
+            $subject->grade = $grade[$subjectId];
+            $subject->remark = $remark[$subjectId];
 
             if (!isset($grandTotal[$student->id])) {
                 $grandTotal[$student->id] = 0;
@@ -657,6 +832,26 @@ public function downloadAllReportSheets()
         }
 
         $averageTotal[$student->id] = count($exam) > 0 ? $grandTotal[$student->id] / count($exam) : 0;
+
+        if ($averageTotal[$student->id] >= 80) {
+            $TeachersRemark[$student->id] = 'An Excellent result!';
+            $PrincipalsRemark[$student->id] = 'An Excellent result, keep it up';
+        } elseif ($averageTotal[$student->id] >= 70 && $averageTotal[$student->id] < 80) {
+            $TeachersRemark[$student->id] = 'A Very Good Result!';
+            $PrincipalsRemark[$student->id] = 'A Very Good result, keep it up.';
+        } elseif ($averageTotal[$student->id] >= 60 && $averageTotal[$student->id] < 70) { 
+            $TeachersRemark[$student->id] = 'Good result.';
+            $PrincipalsRemark[$student->id] = 'Good result, put more effort.';
+        } elseif ($averageTotal[$student->id] >= 50 && $averageTotal[$student->id] < 60) {
+            $TeachersRemark[$student->id] = 'You can do better.';
+            $PrincipalsRemark[$student->id] = 'Put more effort.';
+        } elseif ($averageTotal[$student->id] >= 0 && $averageTotal[$student->id] < 50) {
+            $TeachersRemark[$student->id] = 'Try harder.';
+            $PrincipalsRemark[$student->id] = 'Work harder.';
+        } else {
+            $TeachersRemark[$student->id] = '';
+            $PrincipalsRemark[$student->id] = ''; // Handles any unexpected scores
+        }
 
         $attendanceRecords[$student->id] = $student->attendance->where('term', $term)->where('session', $sessionName)->filter(function ($record) {
             return in_array($record->status, ['Present', 'present', 'Late', 'late', 'excused', 'Excused']);
@@ -696,12 +891,19 @@ public function downloadAllReportSheets()
             'class' => $classCount,
             'exam' => $exam,
             'subjects' => $subjects,
+            'first_cas' => $first_cas,
+            'second_cas' => $second_cas,
             'totalCa' => $totalCa,
             'totalScores' => $totalScores,
+            'grade' => $grade,
+            'remark' => $remark,
+            'TeachersRemark' => $TeachersRemark,
+            'PrincipalsRemark' => $PrincipalsRemark,
             'totalExam' => $totalExam,
             'grandTotal' => $grandTotal,
             'averageTotal' => $averageTotal,
             'cummulativeAverageTotal' => $cummulativeAverageTotal,
+            'attendanceRecord' => $attendanceRecord,
             'dalibi' => $student,
             'studentPosition' => $this->getClassStudentPosition($student->id, $sessionName, $term, $averageTotal)
         ];

@@ -49,6 +49,13 @@
                                 <x-input-error :messages="$errors->get('term_ends')" class="mt-2" />
                             </div>
 
+                            {{-- Days of School --}}
+                            <div>
+                                <x-input-label for="days" :value="__('Days of School')" />
+                                <x-text-input id="days" class="block mt-1 w-full" type="text" name="days" :value="old('days')" autofocus autocomplete="days" />
+                                <x-input-error :messages="$errors->get('days')" class="mt-2" />
+                            </div>
+
                             <!-- Next Term Starts -->
                             <div>
                                 <x-input-label for="next_term_starts" :value="__('Next Term Begins')" />

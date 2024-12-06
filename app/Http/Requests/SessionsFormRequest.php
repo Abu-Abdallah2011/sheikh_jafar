@@ -39,6 +39,9 @@ class SessionsFormRequest extends FormRequest
             'next_term_starts' => [
                 'max:255'
             ],
+            'days' => [
+                'max:255'
+            ],
         ];
     }
 }

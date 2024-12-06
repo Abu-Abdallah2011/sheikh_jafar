@@ -793,6 +793,7 @@ public function update(Request $request, $id){
         $secondCA = $scores[$studentId][$subject]['2nd_ca'];
         $thirdCA = $scores[$studentId][$subject]['3rd_ca'];
         $exams = $scores[$studentId][$subject]['exams'];
+        $days_present = $scores[$studentId][$subject]['days_present'];
             $existingRecord = ExamsModel::where([
                 ['subject_id', '=', $subject],
                 ['student_id', '=', $studentId],
@@ -806,6 +807,7 @@ public function update(Request $request, $id){
             $existingRecord->second_ca = $secondCA;
             $existingRecord->third_ca = $thirdCA;
             $existingRecord->exams = $exams;
+            $existingRecord->days_present = $days_present;
             $existingRecord->update();
             } else{
                 return redirect('/exams/show')->with('message', 'Record Not found!');
